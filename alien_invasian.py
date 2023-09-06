@@ -33,6 +33,7 @@ class AlienInvasian:
             self._check_events()
             self.ship.update()
             self._update_bullets()
+            self._update_aliens()
             self._update_screen()
             
             self.clock.tick(60)
@@ -79,6 +80,10 @@ class AlienInvasian:
         for bullet in self.bullets.copy():
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
+        
+        # Check for any bullets that hit any aliens.
+        collisions = pygame.sprite.groupcollide(
+            self.bullets, self.aliens, True, True)
     
     def _create_alien(self, x_position, y_position):
         """Create an alien and place it in the row"""
@@ -103,6 +108,24 @@ class AlienInvasian:
             # Finished a row. Reset x value, increment y value.
             current_x = alien_width
             current_y += 2 * alien_height
+    
+    def _update_aliens(self):
+        """Updates aliens' positioning"""
+        self.aliens.update()
+        self._check_fleet_edges()
+
+    def _check_fleet_edges(self):
+        """Respond appropriately if any aliens have reached an edge."""
+        for alien in self.aliens.sprites():
+            if alien.check_edges():
+                self._change_fleet_direction()
+                break
+    
+    def _change_fleet_direction(self):
+        """Drop the entire fleet and change the fleet's direction."""
+        for alien in self.aliens.sprites():
+            alien.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
 
     def _update_screen(self):
         """Update images on the screen, and flip to the new screen."""
