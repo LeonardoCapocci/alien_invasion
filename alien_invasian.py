@@ -119,6 +119,7 @@ class AlienInvasian:
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
+            self.settings.increase_speed()
     
     def _create_alien(self, x_position, y_position):
         """Create an alien and place it in the row."""
