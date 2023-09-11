@@ -6,6 +6,7 @@ import pygame
 from settings import Settings
 from game_stats import GameStats
 from button import Button
+from difficulty_button import DifficultyButton
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
@@ -35,6 +36,12 @@ class AlienInvasian:
         self._create_fleet()
 
         self.play_button = Button(self, "Play")
+        self.easy_button = DifficultyButton(self, "EASY")
+        self.easy_button.position_button(0,0)
+        self.medium_button = DifficultyButton(self, "MEDIUM")
+        self.medium_button.position_button(self.medium_button.rect.width,0)
+        self.hard_button = DifficultyButton(self, "HARD")
+        self.hard_button.position_button(self.hard_button.rect.width*2,0)
 
     def run_game(self):
         """Start the main loop for the game."""
@@ -58,17 +65,33 @@ class AlienInvasian:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 self._check_play_button(mouse_pos)
+                self._check_difficulty_buttons(mouse_pos)
             elif event.type == pygame.KEYDOWN:
                 self._check_keydown_events(event)                   
             elif event.type == pygame.KEYUP:
                 self._check_keyup_events(event)                 
+
+    def _check_difficulty_buttons(self, mouse_pos):
+        """Changes the difficulty when the player clicks a difficulty button."""
+        easy_button_clicked = self.easy_button.rect.collidepoint(mouse_pos)
+        if easy_button_clicked and not self.game_active:
+            self.settings.initialize_dynamic_settings()
+            self.settings.bullets_allowed = 100
+            self.settings.bullet_width = 50
+        medium_button_clicked = self.medium_button.rect.collidepoint(mouse_pos)
+        if medium_button_clicked and not self.game_active:
+            self.settings.initialize_dynamic_settings()
+        hard_button_clicked = self.hard_button.rect.collidepoint(mouse_pos)
+        if hard_button_clicked and not self.game_active:
+            self.settings.initialize_dynamic_settings()
+            self.settings.alien_speed = 4.0
+
 
     def _check_play_button(self, mouse_pos):
         """Start a new game when the player clicks Play."""
         button_clicked = self.play_button.rect.collidepoint(mouse_pos)
         if button_clicked and not self.game_active:
             # Reset game stats.
-            self.settings.initialize_dynamic_settings()
             self.stats.reset_stats()
             self.game_active = True
 
@@ -180,6 +203,9 @@ class AlienInvasian:
 
         if not self.game_active:
             self.play_button.draw_button()
+            self.easy_button.draw_button()
+            self.medium_button.draw_button()
+            self.hard_button.draw_button()
 
         pygame.display.flip()
     
