@@ -7,6 +7,8 @@ from settings import Settings
 from game_stats import GameStats
 from button import Button
 from difficulty_button import DifficultyButton
+from scoreboard import Scoreboard
+from lives import Lives
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
@@ -42,6 +44,9 @@ class AlienInvasian:
         self.medium_button.position_button(self.medium_button.rect.width,0)
         self.hard_button = DifficultyButton(self, "HARD")
         self.hard_button.position_button(self.hard_button.rect.width*2,0)
+
+        self.scoreboard = Scoreboard(self)
+        self.lives = Lives(self)
 
     def run_game(self):
         """Start the main loop for the game."""
@@ -84,8 +89,7 @@ class AlienInvasian:
         hard_button_clicked = self.hard_button.rect.collidepoint(mouse_pos)
         if hard_button_clicked and not self.game_active:
             self.settings.initialize_dynamic_settings()
-            self.settings.alien_speed = 4.0
-
+            self.settings.alien_speed = 10
 
     def _check_play_button(self, mouse_pos):
         """Start a new game when the player clicks Play."""
@@ -100,6 +104,9 @@ class AlienInvasian:
 
             self._create_fleet()
             self.ship.center_ship()
+
+            self.stats.reset_stats()
+            self.scoreboard.prep_score()
 
             # Hide the mouse cursor.
             pygame.mouse.set_visible(False)
@@ -140,6 +147,10 @@ class AlienInvasian:
         """Respond to collisions between bullet and alien."""
         collisions = pygame.sprite.groupcollide(
             self.bullets, self.aliens, True, True)
+        if collisions:
+            for aliens in collisions.values():
+                self.stats.score += self.settings.alien_points *len(aliens)
+                self.scoreboard.prep_score()
         if not self.aliens:
             self.bullets.empty()
             self._create_fleet()
@@ -200,6 +211,8 @@ class AlienInvasian:
             bullet.draw_bullet()
         self.ship.blitme()
         self.aliens.draw(self.screen)
+        self.scoreboard.show_score()
+        self.lives.show_lives()
 
         if not self.game_active:
             self.play_button.draw_button()
@@ -211,7 +224,7 @@ class AlienInvasian:
     
     def _ship_hit(self):
         """Respond to the ship being hit by an alien."""
-        if self.stats.ships_left > 0:
+        if self.stats.ships_left > 1:
             # Decrement ships_left.
             self.stats.ships_left -= 1
 
@@ -222,7 +235,7 @@ class AlienInvasian:
             # Create a new fleet and center the ship.
             self._create_fleet()
             self.ship.center_ship()
-
+            self.lives.prep_lives()
             # Pause.
             sleep(1)
         else:
@@ -235,6 +248,7 @@ class AlienInvasian:
         for alien in self.aliens.sprites():
             if alien.rect.bottom >= self.settings.screen_height:
                 self._ship_hit()
+                self.lives.prep_lives()
                 break
         
 if __name__ == '__main__':
